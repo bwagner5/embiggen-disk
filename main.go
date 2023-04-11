@@ -28,11 +28,13 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"time"
 )
 
 var (
 	dry     = flag.Bool("dry-run", false, "don't make changes")
 	verbose = flag.Bool("verbose", false, "verbose output")
+	daemon  = flag.Bool("daemon", false, "daemon mode")
 )
 
 func init() {
@@ -67,22 +69,25 @@ func main() {
 	}
 
 	mnt := flag.Arg(0)
-	e, err := getFileSystemResizer(mnt)
-	vlogf("getFileSystemResizer(%q) = %#v, %v", mnt, e, err)
-	if err != nil {
-		fatalf("error preparing to enlarge %s: %v", mnt, err)
-	}
-	changes, err := Resize(e)
-	if len(changes) > 0 {
-		fmt.Printf("Changes made:\n")
-		for _, c := range changes {
-			fmt.Printf("  * %s\n", c)
+	ticker := time.NewTicker(10 * time.Second)
+	for range ticker.C {
+		e, err := getFileSystemResizer(mnt)
+		vlogf("getFileSystemResizer(%q) = %#v, %v", mnt, e, err)
+		if err != nil {
+			fatalf("error preparing to enlarge %s: %v", mnt, err)
 		}
-	} else if err == nil {
-		fmt.Printf("No changes made.\n")
-	}
-	if err != nil {
-		fatalf("error: %v", err)
+		changes, err := Resize(e)
+		if len(changes) > 0 {
+			fmt.Printf("Changes made:\n")
+			for _, c := range changes {
+				fmt.Printf("  * %s\n", c)
+			}
+		} else if err == nil {
+			fmt.Printf("No changes made.\n")
+		}
+		if err != nil {
+			fatalf("error: %v", err)
+		}
 	}
 }
 
