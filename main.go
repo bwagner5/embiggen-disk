@@ -88,7 +88,11 @@ WantedBy=multi-user.target`)
 		lo.Must0(exec.Command("systemctl", "start", "embiggen-disk.service").Run())
 		statusCmd := exec.Command("systemctl", "status", "embiggen-disk.service")
 		lo.Must0(statusCmd.Run())
-		fmt.Println(statusCmd.Stdout)
+		output, err := statusCmd.CombinedOutput()
+		if err != nil {
+			log.Printf("unable to systemctl status embiggen-disk.service: %s", err)
+		}
+		fmt.Println(string(output))
 		fmt.Println("Successfully setup embiggen-disk.service")
 		os.Exit(0)
 	}
