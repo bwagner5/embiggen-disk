@@ -31,7 +31,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func getFileSystemResizer(mnt string) (Resizer, error) {
+func GetFileSystemResizer(mnt string) (Resizer, error) {
 	fs, err := statFS(mnt)
 	if err != nil {
 		return nil, err
