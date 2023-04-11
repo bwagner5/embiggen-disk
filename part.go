@@ -126,7 +126,7 @@ func (p partitionResizer) Resize() error {
 		switch lastType {
 		case lvmGPTTypeID, rootx8664GPTTypeID, linuxGPTTypeID:
 		default:
-			return fmt.Errorf("unknown GPT partition type %q for %s", lastType, part.dev)
+			return nil //fmt.Errorf("unknown GPT partition type %q for %s", lastType, part.dev)
 		}
 	} else {
 		switch lastType {
