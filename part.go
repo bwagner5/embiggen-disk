@@ -115,7 +115,7 @@ func (p partitionResizer) Resize() error {
 		return fmt.Errorf("unsupported partition table type %q on %s", t, diskDev)
 	}
 
-	part, ok := pt.lastNonZeroPartition()
+	part, ok := pt.firstNonZeroPartition() //pt.lastNonZeroPartition()
 	if !ok {
 		return fmt.Errorf("no non-zero partition found on %s", diskDev)
 	}
@@ -126,7 +126,7 @@ func (p partitionResizer) Resize() error {
 		switch lastType {
 		case lvmGPTTypeID, rootx8664GPTTypeID, linuxGPTTypeID:
 		default:
-			return nil //fmt.Errorf("unknown GPT partition type %q for %s", lastType, part.dev)
+			return fmt.Errorf("unknown GPT partition type %q for %s", lastType, part.dev)
 		}
 	} else {
 		switch lastType {
@@ -267,6 +267,19 @@ func (pt *partitionTable) Write(w io.Writer) error {
 	}
 	_, err := w.Write(buf.Bytes())
 	return err
+}
+
+func (pt *partitionTable) firstNonZeroPartition() (part sfdiskLine, ok bool) {
+	for i := 0; i < len(pt.parts); i++ {
+		part = pt.parts[i]
+		if part.Type() == "0" && part.Start() == 0 && part.Size() == 0 {
+			// Skip useless partitions.
+			// See https://github.com/google/embiggen-disk/issues/6#issuecomment-429055087
+			continue
+		}
+		return part, true
+	}
+	return
 }
 
 func (pt *partitionTable) lastNonZeroPartition() (part sfdiskLine, ok bool) {
