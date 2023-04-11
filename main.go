@@ -27,8 +27,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"runtime"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 var (
@@ -44,6 +47,7 @@ func init() {
 func usage() {
 	fmt.Fprintf(os.Stderr, "Usage of embiggen-disk:\n\n")
 	fmt.Fprintf(os.Stderr, "# embiggen-disk [flags] <mount-point-to-enlarge>\n\n")
+	fmt.Fprintf(os.Stderr, "# embiggen-disk systemd - installs systemd unit file, enables, and starts service in daemon mode \n\n")
 	flag.PrintDefaults()
 	os.Exit(1)
 }
@@ -66,6 +70,27 @@ func main() {
 	}
 	if runtime.GOOS != "linux" {
 		fatalf("embiggen-disk only runs on Linux.")
+	}
+
+	switch flag.Arg(0) {
+	case "systemd":
+		unitFile := []byte(`[Unit]
+Description=embiggen-disk
+
+[Service]
+ExecStart=/root/go/bin/embiggen-disk -verbose -daemon /
+
+[Install]
+WantedBy=multi-user.target`)
+		os.WriteFile("/etc/systemd/system/embiggen-disk.service", unitFile, 0644)
+		lo.Must(exec.Command("systemctl", "daemon-reload").Run())
+		lo.Must(exec.Command("systemctl", "enable", "embiggen-disk.service").Run())
+		lo.Must(exec.Command("systemctl", "start", "embiggen-disk.service").Run())
+		statusCmd := exec.Command("systemctl", "status", "embiggen-disk.service")
+		lo.Must(statusCmd.Run())
+		fmt.Println(statusCmd.Stdout)
+		fmt.Println("Successfully setup embiggen-disk.service")
+		os.Exit(0)
 	}
 
 	mnt := flag.Arg(0)
