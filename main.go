@@ -113,6 +113,12 @@ WantedBy=multi-user.target`)
 			}
 			restartKubeletCmd := exec.Command("systemctl", "restart", "kubelet")
 			lo.Must0(restartKubeletCmd.Run())
+			output, err := restartKubeletCmd.CombinedOutput()
+			if err != nil {
+				log.Printf("there was a problem gathering combined output from `systemctl restart kubelet`: %s", err.Error())
+			} else {
+				fmt.Printf("Restarted Kubelet! %s\n", string(output))
+			}
 		} else if err == nil {
 			fmt.Printf("No changes made.\n")
 		}
