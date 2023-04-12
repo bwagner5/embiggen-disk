@@ -111,6 +111,8 @@ WantedBy=multi-user.target`)
 			for _, c := range changes {
 				fmt.Printf("  * %s\n", c)
 			}
+			restartKubeletCmd := exec.Command("systemctl", "restart", "kubelet")
+			lo.Must0(restartKubeletCmd.Run())
 		} else if err == nil {
 			fmt.Printf("No changes made.\n")
 		}
